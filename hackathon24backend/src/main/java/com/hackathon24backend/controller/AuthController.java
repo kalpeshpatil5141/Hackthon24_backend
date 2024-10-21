@@ -2,6 +2,7 @@ package com.hackathon24backend.controller;
 
 import com.hackathon24backend.config.JwtUtil;
 import com.hackathon24backend.entity.UserOtp;
+import com.hackathon24backend.payload.GenerateOtpPayload;
 import com.hackathon24backend.payload.UserPayload;
 import com.hackathon24backend.response.ApiResponse;
 import com.hackathon24backend.response.JwtResponse;
@@ -33,8 +34,9 @@ public class AuthController {
         return ResponseEntity.ok( new ApiResponse(false,"Otp is invalid",null));
     }
 
+    @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping("/generateOtp")
-    public ResponseEntity<String> generateOtp(@RequestBody UserPayload request) {
+    public ResponseEntity<String> generateOtp(@RequestBody GenerateOtpPayload request) {
         String mobileNumber = request.getMobileNumber();
         UserOtp storedOTP = userService.getStoredOTP(request.getMobileNumber());
         if(storedOTP != null){

@@ -13,33 +13,48 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    private JwtRequestFilter jwtRequestFilter;  // Ensure the filter is injected
+    private JwtRequestFilter jwtRequestFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Disabling CSRF protection if not needed (for stateless APIs)
+        // Disable CSRF (if not needed for stateless API)
         http.csrf(AbstractHttpConfigurer::disable);
 
-        // Configure which endpoints are publicly accessible
+        // Configure public access to OTP endpoints
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/otp/**").permitAll()  // Allow access to this endpoint
-                .anyRequest().authenticated());  // Require authentication for other requests
+                .requestMatchers("/api/otp/**").permitAll()
+                .anyRequest().authenticated());
 
-        // Set session management to stateless
+        // Stateless session management
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Add the JWT request filter to the security chain
+        // Add the JWT request filter
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // CORS configuration for the entire application
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOrigins("http://localhost:4200")  // Allow your Angular frontend
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+        };
     }
 
     @Bean
