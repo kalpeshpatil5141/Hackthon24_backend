@@ -14,7 +14,7 @@ public class ApplicationStartup {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationEvent() {
-//        accountAggregatorService.callFinvuLoginApi();
+        accountAggregatorService.callFinvuLoginApi();
         System.out.println("Method called when Spring Boot application is ready.");
     }
 }

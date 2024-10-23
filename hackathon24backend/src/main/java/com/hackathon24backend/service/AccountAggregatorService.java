@@ -1,11 +1,15 @@
 package com.hackathon24backend.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.hackathon24backend.response.FinvuConsentPlusResponse;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.IOException;
 
 @Service
 public interface AccountAggregatorService {
     public void callFinvuLoginApi();
+
+    public FinvuConsentPlusResponse consentRquestPlus(String mobileNumber);
+
+    public void checkConsentStatus() throws IOException, InterruptedException;
 }

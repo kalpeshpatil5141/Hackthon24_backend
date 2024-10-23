@@ -9,6 +9,7 @@ import com.hackathon24backend.payload.UserPayload;
 import com.hackathon24backend.response.ApiResponse;
 import com.hackathon24backend.response.JwtResponse;
 import com.hackathon24backend.response.OtpResponse;
+import com.hackathon24backend.response.Token;
 import com.hackathon24backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +31,12 @@ public class AuthController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<?> createToken(@RequestBody UserPayload otpRequest) {
-        // Generate JWT for the mobile number
         System.out.println(otpRequest.getOtp());
         boolean result = userService.validateOtp(otpRequest.getMobileNumber(), otpRequest.getOtp());
        if(result) {
            String token = jwtUtil.generateToken(otpRequest.getMobileNumber());
-           return ResponseEntity.ok(new JwtResponse(token));
+//           return ResponseEntity.ok(new JwtResponse(token));
+           return ResponseEntity.ok( new ApiResponse(true,"Token generated successfully",new JwtResponse(new Token(token))));
        }
         return ResponseEntity.ok( new ApiResponse(false,"Otp is invalid",null));
     }
@@ -60,7 +61,6 @@ public class AuthController {
             userService.storeOtp(mobileNumber,otp);
             return ResponseEntity.ok("OTP sent to " + otp);
         }
-
         return ResponseEntity.ok("OTP Can't be generate ");
     }
 }
