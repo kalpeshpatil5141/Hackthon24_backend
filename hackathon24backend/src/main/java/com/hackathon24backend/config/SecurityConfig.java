@@ -30,7 +30,7 @@ public class SecurityConfig {
 
         // Configure public access to OTP endpoints
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/otp/**").permitAll()
+                .requestMatchers("/api/otp/**","/api/files/**").permitAll()
                 .anyRequest().authenticated());
 
         // Stateless session management
