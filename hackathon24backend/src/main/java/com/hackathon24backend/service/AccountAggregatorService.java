@@ -11,5 +11,5 @@ public interface AccountAggregatorService {
 
     public FinvuConsentPlusResponse consentRquestPlus(String mobileNumber);
 
-    public void checkConsentStatus() throws IOException, InterruptedException;
+    public String checkConsentStatus() throws IOException, InterruptedException;
 }

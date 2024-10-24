@@ -41,8 +41,9 @@ public class AccountAggregator {
         }
 
         @GetMapping("/check-consent-status")
-        public void checkConsentStatus() throws IOException, InterruptedException {
-                accountAggregatorService.checkConsentStatus();
+        public ResponseEntity<?> checkConsentStatus() throws IOException, InterruptedException {
+                String response = accountAggregatorService.checkConsentStatus();
+                return ResponseEntity.ok( new ApiResponse(true,"Status",response));
         }
 
         @GetMapping("/get-finvu-token")
