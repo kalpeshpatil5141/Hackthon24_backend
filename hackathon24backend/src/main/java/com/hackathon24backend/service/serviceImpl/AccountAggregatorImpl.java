@@ -7,11 +7,9 @@ import com.hackathon24backend.payload.FinvuLoginPayload;
 import com.hackathon24backend.payload.Header;
 import com.hackathon24backend.payload.LoginBody;
 import com.hackathon24backend.payload.finvupauload.*;
-import com.hackathon24backend.response.ConsentStatusResponse;
-import com.hackathon24backend.response.FiResponse;
-import com.hackathon24backend.response.FinvuConsentPlusResponse;
-import com.hackathon24backend.response.FinvuLoginResponse;
+import com.hackathon24backend.response.*;
 import com.hackathon24backend.service.AccountAggregatorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -52,6 +50,9 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
     private final WebClient webClient;
     private final TokenStorage tokenStorage;
 
+    @Autowired
+    private ClaudeApiService claudeApiService;
+
     AccountAggregatorImpl(WebClient.Builder webClientBuilder,TokenStorage tokenStorage) {
         this.webClient = webClientBuilder.baseUrl("https://third-party-api.com").build();
         this.tokenStorage = tokenStorage;
@@ -59,11 +60,11 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
 
     public void callFinvuLoginApi(){
 
-       Header header = Header.builder()
+        Header header = Header.builder()
                 .rid(this.rid)
                 .ts(this.ts)
                 .channelId(this.channelId)
-               .build();
+                .build();
         LoginBody loginBody = LoginBody.builder()
                 .userId(this.userId)
                 .password(this.password)
@@ -72,17 +73,9 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
         finvuLoginPayload.setHeader(header);
         finvuLoginPayload.setBody(loginBody);
 
-//        try {
-//            System.out.println("Payload: " + new ObjectMapper().writeValueAsString(finvuLoginPayload));
-//        } catch (JsonProcessingException e) {
-//            throw new RuntimeException(e);
-//        }
-
         Mono<FinvuLoginResponse> stringMono = webClient.post()
                 .uri(loginuri)
                 .header("Content-Type", "application/json")
-                // Add Authorization header if needed
-                // .header("Authorization", "Bearer your_token")
                 .bodyValue(finvuLoginPayload)
                 .retrieve()
                 .bodyToMono(FinvuLoginResponse.class);
@@ -93,11 +86,8 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
             token.set(response.getBody().getToken());
 
         }, error -> {
-            // Handle the error case
             System.err.println("Error occurred: " + error.getMessage());
         });
-//        System.out.println("Response:"+response);
-//        return token;
     }
 
     @Override
@@ -131,26 +121,6 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-
-//            Mono<FinvuConsentPlusResponse> stringMono = webClient.post()
-//                    .uri(baseurl + "/ConsentRequestPlus")
-//                    .header("Content-Type", "application/json")
-//                    .header("Authorization", "Bearer "+token)
-//                    .bodyValue(consentPayload)
-//                    .retrieve()
-//                    .bodyToMono(FinvuConsentPlusResponse.class);
-//
-//            stringMono.subscribe(response -> {
-//                tokenStorage.storeToken("consentHandle",response.getBody().getConsentHandle());
-//                System.out.println("Consent Handle Value: "+response.getBody().getConsentHandle());
-//            }, error -> {
-//                // Handle the error case
-//                System.err.println("Error occurred: " + error.getMessage());
-//            });
-
-
-
-
 
             ObjectMapper objectMapper = new ObjectMapper();
             String requestBody = null;
@@ -189,87 +159,131 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
     }
 
     @Override
-    public void checkConsentStatus() throws IOException, InterruptedException {
+    public String checkConsentStatus() throws IOException, InterruptedException {
 
         String consentHandle = tokenStorage.getToken("consentHandle");
         String custID = tokenStorage.getToken("custId");
         String token = tokenStorage.getToken("token");
+        String consentStatus1 = tokenStorage.getToken("ConsentStatus");
 
-        System.out.println("consentHandle"+consentHandle);
-        System.out.println("custID"+custID);
-        System.out.println("token"+token);
+        if (consentStatus1 == null || consentStatus1.equalsIgnoreCase("REQUESTED")) {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseurl + "/ConsentStatus/" + consentHandle + "/" + custID))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + token.trim())
+                    .build();
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseurl + "/ConsentStatus/" + consentHandle + "/" + custID))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + token.trim())
-                .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            String responseBody = response.body();
+            System.out.println(responseBody);
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        String responseBody = response.body();
-        System.out.println(responseBody);
-
-// Optionally deserialize the response to ConsentStatusResponse using ObjectMapper
-        ObjectMapper objectMapper = new ObjectMapper();
-        ConsentStatusResponse consentStatus = objectMapper.readValue(responseBody, ConsentStatusResponse.class);
-
-        if(consentStatus != null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ConsentStatusResponse consentStatus = objectMapper.readValue(responseBody, ConsentStatusResponse.class);
             if (consentStatus.getBody().getConsentStatus().equalsIgnoreCase("REQUESTED")) {
-                System.out.println("Rejected");
-            } else {
-                tokenStorage.storeToken("consentId",consentStatus.getBody().getConsentId());
-                System.out.println("Accepted");
+                tokenStorage.storeToken("ConsentStatus", "REQUESTED");
+                return "REQUESTED";
+            } else if (consentStatus.getBody().getConsentStatus().equalsIgnoreCase("ACCEPTED")) {
+                tokenStorage.storeToken("consentId", consentStatus.getBody().getConsentId());
+                tokenStorage.storeToken("ConsentStatus", "ACCEPTED");
+            }
+        }
+        String updatesConsentStatus = tokenStorage.getToken("ConsentStatus");
+        if (updatesConsentStatus != null) {
+            if(updatesConsentStatus.equalsIgnoreCase("ACCEPTED")){
 
-                Header header = Header.builder()
-                        .rid("2019-12-02T09:40:09.804+0000")
-                        .ts("2019-12-02T09:40:09.804+0000")
-                        .channelId(this.channelId)
-                        .build();
+                String sessionId = tokenStorage.getToken("sessionId");
+                String consentId1 = tokenStorage.getToken("consentId");
 
-                String consentId = consentStatus.getBody().getConsentId();
+                if ((sessionId == null || sessionId.isEmpty()) && (consentHandle != null && !consentHandle.isEmpty()) && (consentId1 != null && !consentId1.isEmpty())) {
 
-                FiRequestBody fiRequestBody = new FiRequestBody();
-                fiRequestBody.setConsentId(consentStatus.getBody().getConsentId());
-                fiRequestBody.setConsentHandleId(consentHandle);
-                fiRequestBody.setCustId(custID);
-                fiRequestBody.setDateTimeRangeTo(LocalDateTime.now().toString());
-                fiRequestBody.setDateTimeRangeFrom(LocalDateTime.now().minusYears(1).toString());
+                    Header header = Header.builder()
+                            .rid("2019-12-02T09:40:09.804+0000")
+                            .ts("2019-12-02T09:40:09.804+0000")
+                            .channelId(this.channelId)
+                            .build();
 
-                FiRequestPayload fiRequestPayload = new FiRequestPayload();
-                fiRequestPayload.setHeader(header);
-                fiRequestPayload.setBody(fiRequestBody);
+                    FiRequestBody fiRequestBody = new FiRequestBody();
+                    fiRequestBody.setConsentId(consentId1);
+                    fiRequestBody.setConsentHandleId(consentHandle);
+                    fiRequestBody.setCustId(custID);
+                    fiRequestBody.setDateTimeRangeTo(LocalDateTime.now().toString());
+                    fiRequestBody.setDateTimeRangeFrom(LocalDateTime.now().minusYears(1).toString());
 
-                String requestBody = objectMapper.writeValueAsString(fiRequestPayload);
+                    FiRequestPayload fiRequestPayload = new FiRequestPayload();
+                    fiRequestPayload.setHeader(header);
+                    fiRequestPayload.setBody(fiRequestBody);
 
-                HttpClient client2 = HttpClient.newHttpClient();
-                HttpRequest request2 = HttpRequest.newBuilder()
-                        .uri(URI.create(baseurl + "/FIRequest"))
-                        .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + token.trim())
-                        .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                        .build();
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String requestBody = objectMapper.writeValueAsString(fiRequestPayload);
 
-                HttpResponse<String> response2 = client2.send(request2, HttpResponse.BodyHandlers.ofString());
-                String responseBody2 = response2.body();
-                FiResponse fiResponse = objectMapper.readValue(responseBody2, FiResponse.class);
-                if(fiResponse != null) {
-                    String sessionId = fiResponse.getBody().getSessionId();
-                    tokenStorage.storeToken("sessionId", fiResponse.getBody().getSessionId());
-                    System.out.println("@@@@@@@@@@@@@@@@@@@ " + fiResponse.getBody().getSessionId());
+                    HttpClient client2 = HttpClient.newHttpClient();
+                    HttpRequest request2 = HttpRequest.newBuilder()
+                            .uri(URI.create(baseurl + "/FIRequest"))
+                            .header("Content-Type", "application/json")
+                            .header("Authorization", "Bearer " + token.trim())
+                            .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                            .build();
 
+                    HttpResponse<String> response2 = client2.send(request2, HttpResponse.BodyHandlers.ofString());
+                    String responseBody2 = response2.body();
+                    FiResponse fiResponse = objectMapper.readValue(responseBody2, FiResponse.class);
+                    if (fiResponse != null) {
+                        tokenStorage.storeToken("sessionId", fiResponse.getBody().getSessionId());
+                    }
+                }else if((sessionId != null && !sessionId.isEmpty()) && (consentHandle != null && !consentHandle.isEmpty()) && (consentId1 != null && !consentId1.isEmpty())) {
+                    String consentId = tokenStorage.getToken("consentId");
                     HttpClient client3 = HttpClient.newHttpClient();
                     HttpRequest request3 = HttpRequest.newBuilder()
-                            .uri(URI.create(baseurl + "/FIStatus/"+consentId+"/" +sessionId+"/"+ consentHandle + "/" + custID))
+                            .uri(URI.create(baseurl + "/FIStatus/" + consentId + "/" + sessionId + "/" + consentHandle + "/" + custID))
                             .header("Content-Type", "application/json")
                             .header("Authorization", "Bearer " + token.trim())
                             .build();
 
                     HttpResponse<String> response3 = client3.send(request3, HttpResponse.BodyHandlers.ofString());
                     String responseBody3 = response3.body();
-                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!"+responseBody3);
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    FiStatusResponse fiResponse = objectMapper.readValue(responseBody3, FiStatusResponse.class);
+                    if(fiResponse != null){
+                        if(fiResponse.getBody().getFiRequestStatus() != null){
+                            if(fiResponse.getBody().getFiRequestStatus().equalsIgnoreCase("PENDING")){
+                                return "PENDING";
+                            }else if(fiResponse.getBody().getFiRequestStatus().equalsIgnoreCase("READY")){
+                                tokenStorage.storeToken("fiRequestStatus",fiResponse.getBody().getFiRequestStatus());
+                            }
+                        }
+                    }
                 }
+                String fiRequestStatus = tokenStorage.getToken("fiRequestStatus");
+                if((sessionId != null && !sessionId.isEmpty()) && (consentId1 != null && !consentId1.isEmpty()) && (fiRequestStatus != null && !fiRequestStatus.isEmpty())){
+                    if(fiRequestStatus.equalsIgnoreCase("READY")){
+
+                        HttpClient client = HttpClient.newHttpClient();
+                        HttpRequest request = HttpRequest.newBuilder()
+                                .uri(URI.create(baseurl + "/FIFetch/" + custID + "/" + consentId1 + "/" + sessionId))
+                                .header("Content-Type", "application/json")
+                                .header("Authorization", "Bearer " + token.trim())
+                                .build();
+
+                        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                        String responseBody = response.body();
+                        System.out.println("))))))))))))" + responseBody);
+//                        String res = claudeApiService.analyzeBankStatement(responseBody);
+//                        System.out.println("Finalllly: "+res);
+//                        return res;
+                        return responseBody;
+                    }else{
+                        return "PENDING";
+                    }
+                }else{
+                    return "PENDING";
+                }
+            }else{
+                return "PENDING";
             }
+        }else{
+            return "REQUESTED";
         }
     }
 }
+

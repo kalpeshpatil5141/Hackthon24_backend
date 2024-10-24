@@ -21,11 +21,17 @@ public class JwtUtil {
     }
 
     public String extractMobileNumber(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();  // Extract mobile number (subject)
+        try {
+            return Jwts.parser()
+                    .setSigningKey(SECRET_KEY)
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        }catch(Exception e){
+            // Extract mobile number (subject)
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public Boolean validateToken(String token, String mobileNumber) {
