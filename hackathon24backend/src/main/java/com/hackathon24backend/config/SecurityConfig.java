@@ -30,7 +30,8 @@ public class SecurityConfig {
 
         // Configure public access to OTP endpoints
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/otp/**","/api/files/**").permitAll()
+//                .requestMatchers("/api/otp/**","/api/files/**").permitAll()
+                .requestMatchers("/api/otp/**","/api/files/**","/api/kyc/**").permitAll()
                 .anyRequest().authenticated());
 
         // Stateless session management
@@ -48,8 +49,8 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:4200")  // Allow your Angular frontend
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:4200","http://192.168.0.107:4200")  // Allow your Angular frontend
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

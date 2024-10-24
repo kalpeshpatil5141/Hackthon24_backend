@@ -4,15 +4,14 @@ import com.hackathon24backend.payload.KycPayload;
 import com.hackathon24backend.payload.finvupauload.*;
 import com.hackathon24backend.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/kyc")
+@RequestMapping("/api/kyc")
+@CrossOrigin(origins = "http://localhost:4200",maxAge = 3600)
 public class KycController {
+
 
     @PostMapping("/pannumber")
     public ResponseEntity<?> validatePanNumber(@RequestBody KycPayload request) {
