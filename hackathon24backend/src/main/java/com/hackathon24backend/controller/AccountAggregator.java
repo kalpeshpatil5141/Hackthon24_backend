@@ -23,14 +23,15 @@ public class AccountAggregator {
         @Autowired
         private TokenStorage tokenStorage;
 
-        @PostMapping("/call")
+        @PostMapping("/generate-finvu-token")
         public void callThirdPartyApi() throws JsonProcessingException {
-
              accountAggregatorService.callFinvuLoginApi();
         }
 
         @PostMapping("/consent-details/{mobileNumber}")
         public ResponseEntity<?> consentRequestPlus(@PathVariable String mobileNumber){
+
+                accountAggregatorService.callFinvuLoginApi();
 
                 FinvuConsentPlusResponse finvuConsentPlusResponseMono = accountAggregatorService.consentRquestPlus(mobileNumber);
                 if(finvuConsentPlusResponseMono != null){

@@ -54,7 +54,7 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
     private ClaudeApiService claudeApiService;
 
     AccountAggregatorImpl(WebClient.Builder webClientBuilder,TokenStorage tokenStorage) {
-        this.webClient = webClientBuilder.baseUrl("https://third-party-api.com").build();
+        this.webClient = webClientBuilder.baseUrl(baseurl).build();
         this.tokenStorage = tokenStorage;
     }
 
@@ -81,7 +81,7 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
                 .bodyToMono(FinvuLoginResponse.class);
         AtomicReference<String> token = new AtomicReference<>("");
         stringMono.subscribe(response -> {
-            System.out.println("Response: " + response.getBody().getToken());
+//            System.out.println("Response: " + response.getBody().getToken());
             tokenStorage.storeToken("token",response.getBody().getToken());
             token.set(response.getBody().getToken());
 

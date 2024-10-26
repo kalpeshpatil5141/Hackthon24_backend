@@ -24,4 +24,5 @@ public class User {
 
     @Column(name = "is_validate",nullable = true)
     private Boolean is_validate;
+
 }
