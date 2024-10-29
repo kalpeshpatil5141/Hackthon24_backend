@@ -103,9 +103,11 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
         consentPlus.setCustId(mobileNumber+"@finvu");
         consentPlus.setConsentDescription("Personal finance management");
         consentPlus.setAaId("cookiejar-aa@finvu.in");
-        consentPlus.setTemplateName("FINVUDEMO_TESTING");
+        consentPlus.setTemplateName("BANK_STATEMENT_ONETIME");
         consentPlus.setUserSessionId("sessionid123");
-        consentPlus.setRedirectUrl("https://dev.credit-os.mettarev.com/loan_officer/case/27");
+        //consentPlus.setRedirectUrl("http://localhost:4200/user/analysis");
+//        consentPlus.setRedirectUrl("https://dev.credit-os.mettarev.com/loan_officer/case/27");
+
         consentPlus.setFip(new ArrayList<>());
         consentPlus.setConsentDetails(new ConsentDetails());
 
@@ -268,10 +270,10 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
                         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                         String responseBody = response.body();
                         System.out.println("))))))))))))" + responseBody);
-//                        String res = claudeApiService.analyzeBankStatement(responseBody);
-//                        System.out.println("Finalllly: "+res);
-//                        return res;
-                        return responseBody;
+                        String res = claudeApiService.analyzeBankStatement(responseBody);
+                        System.out.println("Finalllly: "+res);
+                        return res;
+//                        return responseBody;
                     }else{
                         return "PENDING";
                     }

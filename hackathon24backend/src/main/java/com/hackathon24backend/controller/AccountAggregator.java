@@ -3,9 +3,11 @@ package com.hackathon24backend.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hackathon24backend.config.TokenStorage;
 import com.hackathon24backend.response.ApiResponse;
+import com.hackathon24backend.response.FinvuCheckStatusResponse;
 import com.hackathon24backend.response.FinvuConsentPlusResponse;
 import com.hackathon24backend.service.AccountAggregatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -42,8 +44,13 @@ public class AccountAggregator {
 
         @GetMapping("/check-consent-status")
         public ResponseEntity<?> checkConsentStatus() throws IOException, InterruptedException {
-                String response = accountAggregatorService.checkConsentStatus();
-                return ResponseEntity.ok( new ApiResponse(true,"Status",response));
+                String respon = accountAggregatorService.checkConsentStatus();
+                if(respon  != null && !respon.isEmpty()){
+                        FinvuCheckStatusResponse response =new FinvuCheckStatusResponse();
+                        response.setData(respon);
+                        return ResponseEntity.ok( new ApiResponse(true,"Success",response));
+                }
+                return ResponseEntity.ok( new ApiResponse(false,"Failed", HttpStatus.NOT_FOUND));
         }
 
         @GetMapping("/get-finvu-token")
