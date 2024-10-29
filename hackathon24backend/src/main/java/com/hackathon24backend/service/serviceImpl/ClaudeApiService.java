@@ -9,6 +9,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @Service
 public class ClaudeApiService {
@@ -136,5 +138,44 @@ public class ClaudeApiService {
         headers.set("Content-Type", "application/json");
         headers.set("Accept", "application/json");
         return headers;
+    }
+
+    public String processJson(String jsonString){
+
+        JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray bodyArray = jsonObject.getJSONArray("body");
+
+        for (int i = 0; i < bodyArray.length(); i++) {
+            JSONObject bodyItem = bodyArray.getJSONObject(i);
+            JSONArray fiObjects = bodyItem.getJSONArray("fiObjects");
+
+            for (int j = 0; j < fiObjects.length(); j++) {
+                JSONObject fiObject = fiObjects.getJSONObject(j);
+                JSONObject transactions = fiObject.getJSONObject("Transactions");
+                JSONArray transactionArray = transactions.getJSONArray("Transaction");
+
+                JSONObject summary = fiObject.getJSONObject("Summary");
+
+                if (transactionArray.length() > 0) {
+                    JSONObject firstTransaction = transactionArray.getJSONObject(0);
+                    String transactionType = firstTransaction.getString("type");
+                    double currentBalance = firstTransaction.getDouble("currentBalance");
+                    double amount = firstTransaction.getDouble("amount");
+                    double openingBalance;
+
+                    if ("CREDIT".equals(transactionType)) {
+                        openingBalance = currentBalance - amount;
+                    } else {
+                        openingBalance = currentBalance + amount;
+                    }
+
+                    // Add opening balance to Summary
+                    summary.put("openingBalance", openingBalance);
+                }
+            }
+        }
+
+        System.out.println(jsonObject.toString(2));
+        return jsonObject.toString(); // Pretty print the JSON
     }
 }

@@ -208,7 +208,7 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
                     fiRequestBody.setConsentHandleId(consentHandle);
                     fiRequestBody.setCustId(custID);
                     fiRequestBody.setDateTimeRangeTo(LocalDateTime.now().toString());
-                    fiRequestBody.setDateTimeRangeFrom(LocalDateTime.now().minusYears(1).toString());
+                    fiRequestBody.setDateTimeRangeFrom(LocalDateTime.now().minusMonths(6).toString());
 
                     FiRequestPayload fiRequestPayload = new FiRequestPayload();
                     fiRequestPayload.setHeader(header);
@@ -267,11 +267,12 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
 
                         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                         String responseBody = response.body();
-                        System.out.println("))))))))))))" + responseBody);
-//                        String res = claudeApiService.analyzeBankStatement(responseBody);
-//                        System.out.println("Finalllly: "+res);
-//                        return res;
-                        return responseBody;
+                        String s = claudeApiService.processJson(responseBody);
+                        System.out.println("))))))))))))" + s);
+                        String res = claudeApiService.analyzeBankStatement(s);
+                        System.out.println("Finalllly: "+res);
+                        return res;
+//                        return responseBody;
                     }else{
                         return "PENDING";
                     }
