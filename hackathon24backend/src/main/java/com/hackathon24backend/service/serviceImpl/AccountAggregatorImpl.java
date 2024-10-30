@@ -105,7 +105,7 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
         consentPlus.setAaId("cookiejar-aa@finvu.in");
         consentPlus.setTemplateName("BANK_STATEMENT_ONETIME");
         consentPlus.setUserSessionId("sessionid123");
-        //consentPlus.setRedirectUrl("http://localhost:4200/user/analysis");
+        consentPlus.setRedirectUrl("http://localhost:4200/user/analysis");
 //        consentPlus.setRedirectUrl("https://dev.credit-os.mettarev.com/loan_officer/case/27");
 
         consentPlus.setFip(new ArrayList<>());
@@ -209,8 +209,10 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
                     fiRequestBody.setConsentId(consentId1);
                     fiRequestBody.setConsentHandleId(consentHandle);
                     fiRequestBody.setCustId(custID);
-                    fiRequestBody.setDateTimeRangeTo(LocalDateTime.now().toString());
-                    fiRequestBody.setDateTimeRangeFrom(LocalDateTime.now().minusYears(1).toString());
+//                    fiRequestBody.setDateTimeRangeTo(LocalDateTime.now().toString());
+//                    fiRequestBody.setDateTimeRangeFrom(LocalDateTime.now().minusYears(1).toString());
+                    fiRequestBody.setDateTimeRangeTo("2024-10-17T12:14:43.727+0000");
+                    fiRequestBody.setDateTimeRangeFrom("2024-05-01T12:14:43.727+0000");
 
                     FiRequestPayload fiRequestPayload = new FiRequestPayload();
                     fiRequestPayload.setHeader(header);
@@ -218,6 +220,7 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
 
                     ObjectMapper objectMapper = new ObjectMapper();
                     String requestBody = objectMapper.writeValueAsString(fiRequestPayload);
+                    System.out.println("Error Response Enitity"+requestBody);
 
                     HttpClient client2 = HttpClient.newHttpClient();
                     HttpRequest request2 = HttpRequest.newBuilder()
@@ -229,9 +232,15 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
 
                     HttpResponse<String> response2 = client2.send(request2, HttpResponse.BodyHandlers.ofString());
                     String responseBody2 = response2.body();
-                    FiResponse fiResponse = objectMapper.readValue(responseBody2, FiResponse.class);
-                    if (fiResponse != null) {
-                        tokenStorage.storeToken("sessionId", fiResponse.getBody().getSessionId());
+                    System.out.println("Error Response Enitity"+responseBody2);
+                    try {
+                        FiResponse fiResponse = objectMapper.readValue(responseBody2, FiResponse.class);
+                        if (fiResponse != null) {
+                            tokenStorage.storeToken("sessionId", fiResponse.getBody().getSessionId());
+                        }
+                    }catch (Exception e){
+                        ErrorResponseEntity fiResponse = objectMapper.readValue(responseBody2, ErrorResponseEntity.class);
+                        return toString();
                     }
                 }else if((sessionId != null && !sessionId.isEmpty()) && (consentHandle != null && !consentHandle.isEmpty()) && (consentId1 != null && !consentId1.isEmpty())) {
                     String consentId = tokenStorage.getToken("consentId");

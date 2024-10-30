@@ -1,5 +1,7 @@
 package com.hackathon24backend.service.serviceImpl;
 
+import com.hackathon24backend.util.DecryptionUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +18,13 @@ public class ClaudeApiService {
     @Value("${anthropic.api.key}")
     private String apiKey;
 
+    @Value("${anthropic.api.secretkey}")
+    private String apiSecreteKey;
+
     private final String apiUrl = "https://api.anthropic.com/v1/messages";
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+
 
     public ClaudeApiService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -128,9 +134,12 @@ public class ClaudeApiService {
         return requestBody;
     }
 
-    private HttpHeaders createHeaders() {
+    private HttpHeaders createHeaders() throws Exception {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("x-api-key", apiKey);  // Add this if required by your API configuration
+        String decryptKey = DecryptionUtil.decrypt(apiKey,
+                apiSecreteKey);
+//        headers.set("x-api-key", apiKey);  // Add this if required by your API configuration
+        headers.set("x-api-key", decryptKey);
         headers.set("Authorization", "Bearer " + apiKey);
         headers.set("anthropic-version", "2023-06-01");
         headers.set("Content-Type", "application/json");

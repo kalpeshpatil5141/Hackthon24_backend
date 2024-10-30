@@ -5,7 +5,9 @@ import com.hackathon24backend.config.TokenStorage;
 import com.hackathon24backend.response.ApiResponse;
 import com.hackathon24backend.response.FinvuCheckStatusResponse;
 import com.hackathon24backend.response.FinvuConsentPlusResponse;
+import com.hackathon24backend.response.KeyResponse;
 import com.hackathon24backend.service.AccountAggregatorService;
+import com.hackathon24backend.util.EncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +58,16 @@ public class AccountAggregator {
         @GetMapping("/get-finvu-token")
         public ResponseEntity<?> getFinvuToken() {
                 return ResponseEntity.ok( new ApiResponse(true,"Finvu Token Fetch Success",tokenStorage.getToken("token")));
+        }
+
+        @PostMapping("/encrypt-key/{key}")
+        public ResponseEntity<?> encryptionKey(@PathVariable String key) throws Exception {
+                KeyResponse keyResponse = new KeyResponse();
+                String secretKey = EncryptionUtil.generateSecretKey();
+                String encryptedKey = EncryptionUtil.encrypt(key, secretKey);
+                keyResponse.setSecretKey(secretKey);
+                keyResponse.setEncryptedKey(encryptedKey);
+                return ResponseEntity.ok(new ApiResponse(true, "Encryption Successful", keyResponse));
         }
 }
 
