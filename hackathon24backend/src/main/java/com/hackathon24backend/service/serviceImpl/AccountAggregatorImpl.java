@@ -105,7 +105,8 @@ public class AccountAggregatorImpl implements AccountAggregatorService {
         consentPlus.setAaId("cookiejar-aa@finvu.in");
         consentPlus.setTemplateName("BANK_STATEMENT_ONETIME");
         consentPlus.setUserSessionId("sessionid123");
-        consentPlus.setRedirectUrl("http://localhost:4200/user/analysis");
+      consentPlus.setRedirectUrl("http://localhost:4200/user/analysis");
+//        consentPlus.setRedirectUrl("http://hackathon.creditos.in/user/analysis");
 //        consentPlus.setRedirectUrl("https://dev.credit-os.mettarev.com/loan_officer/case/27");
 
         consentPlus.setFip(new ArrayList<>());

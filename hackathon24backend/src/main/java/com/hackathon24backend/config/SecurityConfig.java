@@ -50,10 +50,12 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:4200","http://192.168.0.107:4200")  // Allow your Angular frontend
+//                        .allowedOrigins("http://localhost:4200","http://192.168.0.107:4200")  // Allow your Angular frontend
+//                        .allowedOrigins("http://hackathon.creditos.in")
+                        .allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowedHeaders("*");
+//                        .allowCredentials(true);
             }
         };
     }

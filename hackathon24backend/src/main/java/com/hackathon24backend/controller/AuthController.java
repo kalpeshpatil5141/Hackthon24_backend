@@ -41,7 +41,7 @@ public class AuthController {
         return ResponseEntity.ok( new ApiResponse(false,"Otp is invalid",null));
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+//    @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping("/generateOtp")
     public ResponseEntity<?> generateOtp(@RequestBody GenerateOtpPayload request) throws JsonProcessingException {
         String mobileNumber = request.getMobileNumber();
